@@ -1,3 +1,3 @@
 # Verification evidence
 
-This directory contains test reports, not human participant results. Local geometric and controller tests passed (31 passed; PyBullet and MediaPipe modules skipped in the authoring container). The Ubuntu 22.04 workflow runs the full pinned-dependency suite and official-model smoke test. Physical webcam performance must be measured on the target laptop.
+See [STATUS.md](STATUS.md) for actual Ubuntu 22.04 CI results, source commit, downloadable raw evidence, and the untested physical-webcam boundary. These are software and simulation checks, not participant results.
