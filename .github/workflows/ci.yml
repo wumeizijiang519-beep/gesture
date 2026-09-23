@@ -34,7 +34,7 @@ jobs:
         run: python -m gesture download-model
       - name: Static checks
         run: |
-          python -m compileall -q gesture tests
+          python -m compileall -q gesture scripts tests
           python -m ruff check .
       - name: Geometry, state machine, camera calibration, physics, replay and inference tests
         run: python -m pytest -q --junitxml=validation/ci-junit.xml
@@ -46,9 +46,29 @@ jobs:
         run: xvfb-run -a python -m gesture demo --seconds 1 --output runs/gui-smoke
       - name: CLI acceptance and recorded numerical evidence
         run: PYTHON=python bash scripts/verify_all.sh validation/acceptance
+      - name: Build revision-identified source archive
+        run: |
+          python scripts/package_source.py --output dist/gesture-source.zip
+          (cd dist && sha256sum -c gesture-source.zip.sha256)
+      - name: Run source archive outside the checkout
+        run: |
+          EXTRACT="$(mktemp -d)"
+          python -m zipfile -e dist/gesture-source.zip "$EXTRACT"
+          cd "$EXTRACT/gesture"
+          test "$(cat SOURCE_REVISION.txt)" = "$GITHUB_SHA"
+          PYTHONPATH="$PWD" python -m gesture demo --task reach --seconds 9 --headless \
+            --output "$GITHUB_WORKSPACE/validation/archive-smoke" --assert-success
       - name: Archive verification evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: ubuntu22-validation
           path: validation/
+      - name: Archive validated source release
+        uses: actions/upload-artifact@v4
+        with:
+          name: gesture-source-${{ github.sha }}
+          path: |
+            dist/gesture-source.zip
+            dist/gesture-source.zip.sha256
+          if-no-files-found: error
