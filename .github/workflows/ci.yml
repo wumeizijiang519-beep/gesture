@@ -1,0 +1,47 @@
+name: Reproducibility
+on:
+  push:
+    paths-ignore: ['docs/**', 'README.md', 'LICENSE', 'validation/**']
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  ubuntu22:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    env:
+      PYTHONHASHSEED: '7'
+      OMP_NUM_THREADS: '1'
+      OPENBLAS_NUM_THREADS: '1'
+      MPLBACKEND: Agg
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+          cache: pip
+      - name: Install system libraries
+        run: sudo apt-get update && sudo apt-get install -y libgl1 libglib2.0-0 libportaudio2
+      - name: Install pinned application dependencies
+        run: |
+          python -m pip install pip==25.0.1 setuptools==75.8.0 wheel==0.45.1
+          python -m pip install -e '.[vision,dev]'
+          python -m pip check
+          python -m pip freeze --exclude-editable
+      - name: Verify official model
+        run: python -m gesture download-model
+      - name: Static checks
+        run: |
+          python -m compileall -q gesture tests
+          python -m ruff check .
+      - name: Geometry, state machine, camera calibration, physics, replay and inference tests
+        run: python -m pytest -q --junitxml=validation/ci-junit.xml
+      - name: Full application doctor (no physical camera)
+        run: python -m gesture doctor
+      - name: Archive verification evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ubuntu22-validation
+          path: validation/

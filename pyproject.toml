@@ -1,0 +1,38 @@
+[build-system]
+requires = ["setuptools==75.8.0", "wheel==0.45.1"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "gesture-rgb-teleop"
+version = "1.0.0"
+description = "Calibrated monocular RGB hand teleoperation of a simulated Franka Panda"
+readme = "README.md"
+requires-python = ">=3.10,<3.13"
+license = {text = "MIT"}
+dependencies = ["numpy==1.26.4", "scipy==1.13.1", "opencv-contrib-python==4.11.0.86", "pybullet==3.2.7", "matplotlib==3.9.4"]
+
+[project.optional-dependencies]
+vision = ["mediapipe==0.10.21", "jax==0.4.30", "jaxlib==0.4.30"]
+dev = ["pytest==8.3.5", "ruff==0.11.2"]
+
+[project.scripts]
+gesture = "gesture.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["gesture*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
+markers = ["integration: needs PyBullet", "vision: needs MediaPipe and model"]
+
+[tool.ruff]
+line-length = 110
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/test_integration.py" = ["E402"]
+"tests/test_vision.py" = ["E402"]
